@@ -139,7 +139,7 @@
             const lon2 = coords[1][0].lon;
 
             const distancia = haversine(lat1, lon1, lat2, lon2);
-            const distanciaComEstrada = distancia * 1.01; // Aumenta 27% para simular estradas e curvas
+            const distanciaComEstrada = distancia * 1.20; // Aumenta 27% para simular estradas e curvas
 
             document.getElementById("resultado").innerText = `Distância com estradas: ${distanciaComEstrada.toFixed(2)} km`;
             document.getElementById("btnCalcular").classList.remove("hidden");
