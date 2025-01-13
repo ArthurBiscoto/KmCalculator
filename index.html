@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Distâncias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .result {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculador de Distâncias</h1>
+        <label for="saida">Local de Saída:</label>
+        <input type="text" id="saida" placeholder="Digite o local de saída">
+        
+        <label for="destino">Destino:</label>
+        <input type="text" id="destino" placeholder="Digite o destino">
+        
+        <button onclick="calcularDistancia()">Procurar</button>
+        
+        <p id="resultado"></p>
+        
+        <button onclick="calcularDivisao()" class="hidden" id="btnCalcular">Calcular</button>
+        
+        <p id="divisao"></p>
+    </div>
+
+    <script>
+        async function calcularDistancia() {
+            const saida = document.getElementById("saida").value;
+            const destino = document.getElementById("destino").value;
+            if (!saida || !destino) {
+                alert("Preencha ambos os campos!");
+                return;
+            }
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=`;
+            const coords = await Promise.all([ // Obtendo as coordenadas das cidades
+                fetch(url + encodeURIComponent(saida)).then(res => res.json()),
+                fetch(url + encodeURIComponent(destino)).then(res => res.json())
+            ]);
+
+            if (coords[0].length === 0 || coords[1].length === 0) {
+                document.getElementById("resultado").innerText = "Localização não encontrada!";
+                return;
+            }
+
+            const lat1 = coords[0][0].lat;
+            const lon1 = coords[0][0].lon;
+            const lat2 = coords[1][0].lat;
+            const lon2 = coords[1][0].lon;
+
+            const distancia = haversine(lat1, lon1, lat2, lon2);
+            const distanciaComEstrada = distancia * 1.27; // Aumenta 27% para simular estradas e curvas
+
+            document.getElementById("resultado").innerText = `Distância com estradas: ${distanciaComEstrada.toFixed(2)} km`;
+            document.getElementById("btnCalcular").classList.remove("hidden");
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raio da Terra em km
+            const toRad = deg => (deg * Math.PI) / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function calcularDivisao() {
+            const distanciaTexto = document.getElementById("resultado").innerText;
+            const distancia = parseFloat(distanciaTexto.split(": ")[1].split(" ")[0]); // Pegando a distância com estradas
+            const distanciaPorDia = 500; // Distância que o motorista pode rodar por dia
+
+            // Calculando o número de dias, arredondando para cima
+            const dias = Math.ceil(distancia / distanciaPorDia);
+            document.getElementById("divisao").innerText = `Número de dias: ${dias}`;
+        }
+    </script>
+</body>
+</html>
